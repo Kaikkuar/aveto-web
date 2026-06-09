@@ -1,0 +1,77 @@
+---
+- name: Deploy Aveto Web to Hetzner VPS
+  hosts: web
+  become: yes
+  vars:
+    repo_url: "git@github.com:Kaikkuar/aveto-web.git"
+    repo_path: "/srv/www/aveto-web"
+    web_root: "/srv/www/web.aveto.fi/public"
+    node_version: "20"
+
+  tasks:
+    - name: Install Node.js and npm
+      apt:
+        name:
+          - nodejs
+          - npm
+        state: present
+        update_cache: yes
+
+    - name: Create repo directory
+      file:
+        path: "{{ repo_path }}"
+        state: directory
+        owner: ari
+        group: www-data
+        mode: '0755'
+
+    - name: Clone or update repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ repo_path }}"
+        version: master
+        accept_hostkey: yes
+        key_file: /root/.ssh/id_rsa
+      become_user: ari
+
+    - name: Install npm dependencies
+      npm:
+        path: "{{ repo_path }}"
+        state: present
+      become_user: ari
+
+    - name: Build React app
+      command:
+        cmd: npm run build
+        chdir: "{{ repo_path }}"
+      become_user: ari
+      environment:
+        NODE_ENV: production
+
+    - name: Create web root if not exists
+      file:
+        path: "{{ web_root }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Copy built files to web root
+      command:
+        cmd: "cp -r {{ repo_path }}/dist/* {{ web_root }}/"
+      notify: Reload nginx
+
+    - name: Set correct permissions
+      file:
+        path: "{{ web_root }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+        recurse: yes
+
+  handlers:
+    - name: Reload nginx
+      systemd:
+        name: nginx
+        state: reloaded

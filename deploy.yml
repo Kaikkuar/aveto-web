@@ -3,7 +3,7 @@
   hosts: web
   become: yes
   vars:
-    repo_url: "git@github.com:Kaikkuar/aveto-web.git"
+    repo_url: "https://github.com/Kaikkuar/aveto-web.git"
     repo_path: "/srv/www/aveto-web"
     web_root: "/srv/www/web.aveto.fi/public"
     node_version: "20"

@@ -19,3 +19,6 @@ Thumbs.db
 # Build output
 dist/
 build/
+
+# Vite
+.vite/

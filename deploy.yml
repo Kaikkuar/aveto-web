@@ -56,9 +56,15 @@
         group: www-data
         mode: '0755'
 
+    - name: Check dist directory
+      command: "ls -la {{ repo_path }}/dist/"
+      register: dist_check
+      ignore_errors: yes
+
     - name: Copy built files to web root
-      command:
-        cmd: "cp -r {{ repo_path }}/dist/* {{ web_root }}/"
+      shell: |
+        rm -rf {{ web_root }}/*
+        cp -r {{ repo_path }}/dist/. {{ web_root }}/
       notify: Reload nginx
 
     - name: Set correct permissions
